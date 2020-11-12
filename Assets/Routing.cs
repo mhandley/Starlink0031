@@ -6,18 +6,21 @@ using System.Collections;
 public class Link {
 	Node[] nodes;
 	float dist; // length of link
-	public Link(Node n1, Node n2) {
+	bool dist_limited;  // RF links have a distance limit, lasers do not
+	public Link(Node n1, Node n2, bool dist_limited_) {
 		nodes = new Node[2];
 		nodes [0] = n1;
 		nodes [1] = n2;
 		dist = Vector3.Distance (n1._position, n2._position);
+		dist_limited = dist_limited_;
 	}
 
-	public Link(Node n1, Node n2, float dist_) {
+	public Link(Node n1, Node n2, float dist_, bool dist_limited_) {
 		nodes = new Node[2];
 		nodes [0] = n1;
 		nodes [1] = n2;
 		dist = dist_;
+		dist_limited = dist_limited_;
 	}
 
 	public Node OtherNode(Node n) {
@@ -39,7 +42,7 @@ public class Link {
 
 	public void UpdateDist(float maxdist) {
 		dist = Vector3.Distance (nodes[0]._position, nodes[1]._position);
-		if (dist > maxdist) {
+		if (dist_limited && dist > maxdist) {
 			dist = Node.INFINITY; // unreachable
 		} 
 	}
@@ -132,26 +135,26 @@ public class Node {
 		}
 	}
 
-	public void AddNeighbour(Node node) {
+	public void AddNeighbour(Node node, bool dist_limited) {
 		for (int i = 0; i < _linkcount; i++) {
 			if (_links [i].OtherNode (this) == node) {
 				// this one is already a neighbour
 				return;
 			}
 		}
-		Link l = new Link (this, node);
+		Link l = new Link (this, node, dist_limited);
 		AddLink (l);
 		node.AddLink (l);
 	}
 
-	public void AddNeighbour(Node node, float dist) {
+	public void AddNeighbour(Node node, float dist, bool dist_limited) {
 		for (int i = 0; i < _linkcount; i++) {
 			if (_links [i].OtherNode (this) == node) {
 				// this one is already a neighbour
 				return;
 			}
 		}
-		Link l = new Link (this, node, dist);
+		Link l = new Link (this, node, dist, dist_limited);
 		AddLink (l);
 		node.AddLink (l);
 	}

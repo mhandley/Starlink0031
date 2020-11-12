@@ -7,6 +7,7 @@ using System;
 using UnityEngine.SceneManagement;
 
 public enum RouteChoice {TransAt, TransPac, LonJob, USsparse, USdense, TorMia, Sydney_SFO, Sydney_Tokyo, Sydney_Lima, Followsat};
+public enum LogChoice { None, RTT, Distance, HopDists, LaserDists };
 
 public class ActiveISL {
 	public SatelliteSP0031 sat1, sat2;
@@ -126,8 +127,6 @@ public class SP_basic_0031: MonoBehaviour {
 	public int decimator;
 	public float raan0 = 0f;
 
-
-	public enum LogChoice {None, RTT, Distance};
 	public LogChoice log_choice = LogChoice.None;
 	public string log_filename = "/users/mjh/docs/starlink/rtt.txt";
 	public enum BeamChoice {AllOff, AllOn, SrcDstOn};
@@ -682,7 +681,7 @@ public class SP_basic_0031: MonoBehaviour {
     }
 
     GameObject CreateCity(float latitude, float longitude, bool is_relay) {
-		GameObject city = (GameObject)Instantiate (city_prefab, new Vector3(0f, 0f, -6382.2f), transform.rotation);
+		GameObject city = (GameObject)Instantiate (city_prefab, new Vector3(0f, 0f, /*-6382.2f*/-6371.0f), transform.rotation);
 		float long_offset = 20f;
 		city.transform.RotateAround (Vector3.zero, Vector3.up, longitude - long_offset);
 		Vector3 lat_axis = Quaternion.Euler(0f, -90f, 0f) * city.transform.position;
@@ -716,7 +715,8 @@ public class SP_basic_0031: MonoBehaviour {
 				double sat_angle =  (-1f * sat_phase_offset * sat_angle_step) + (i * sat_angle_step*sat_phase_stagger) + (s * sat_angle_step);
 				SatelliteSP0031 newsat = new SatelliteSP0031 (satcount, s, i, transform, orbits[orbitcount], 
 					sat_angle, maxlasers, maxsats, phase1_sats, sat_phase_stagger, sats_per_orbit, num_orbits,
-					altitude, beam_angle, beam_radius, satellite, beam_prefab, beam_prefab2, laser, thin_laser);
+					altitude, beam_angle, beam_radius, satellite, beam_prefab, beam_prefab2, laser, thin_laser,
+                    logfile, log_choice);
 				satlist [satcount] = newsat;
 				if (beam_on == BeamChoice.AllOn) {
 					newsat.BeamOn ();
@@ -753,7 +753,8 @@ public class SP_basic_0031: MonoBehaviour {
 					SatelliteSP0031 newsat = 
 						new SatelliteSP0031 (satcount, s, i, transform, orbits[orbitcount], sat_angle, maxlasers, 
 											 maxsats, phase1_sats, sat_phase_offset, sats_per_orbit, num_orbits, altitude, 
-											 beam_angle, beam_radius, satellite, beam_prefab, beam_prefab2, laser, thin_laser);
+											 beam_angle, beam_radius, satellite, beam_prefab, beam_prefab2,
+                                             laser, thin_laser, logfile, log_choice);
 					satlist [satcount] = newsat;
 					if (beam_on == BeamChoice.AllOn) {
 						newsat.BeamOn ();
@@ -883,25 +884,25 @@ public class SP_basic_0031: MonoBehaviour {
 	void BuildRouteGraph(RouteGraph rgph, GameObject city1, GameObject city2, float maxdist, float margin) {
 		for (int satnum = 0; satnum < maxsats; satnum++) {
 			for (int i = 0; i < satlist [satnum].assignedcount; i++) {
-				rgph.AddNeighbour (satnum, satlist [satnum].assignedsats [i].satid);
+				rgph.AddNeighbour (satnum, satlist [satnum].assignedsats [i].satid, false);
 			}
 
 			// Add start city
 			float radiodist = Vector3.Distance (satlist [satnum].gameobject.transform.position, 
 				city1.transform.position);
 			if (radiodist * km_per_unit < maxdist) { 
-				rgph.AddNeighbour (maxsats, satnum, radiodist);
+				rgph.AddNeighbour (maxsats, satnum, radiodist, true);
 			} else if (radiodist * km_per_unit < maxdist + margin) { 
-				rgph.AddNeighbour (maxsats, satnum, Node.INFINITY);
+				rgph.AddNeighbour (maxsats, satnum, Node.INFINITY, true);
 			}
 
 			// Add end city
 			radiodist = Vector3.Distance (satlist [satnum].gameobject.transform.position, 
 				city2.transform.position);
 			if (radiodist * km_per_unit < maxdist) {
-				rgph.AddNeighbour (maxsats + 1, satnum, radiodist);
+				rgph.AddNeighbour (maxsats + 1, satnum, radiodist, true);
 			} else if (radiodist * km_per_unit < maxdist + margin) {
-				rgph.AddNeighbour (maxsats + 1, satnum, Node.INFINITY);
+				rgph.AddNeighbour (maxsats + 1, satnum, Node.INFINITY, true);
 			}
 
 			// Add relays
@@ -914,12 +915,12 @@ public class SP_basic_0031: MonoBehaviour {
 				foreach (City relay in lst) {
 					radiodist = Vector3.Distance (satlist [satnum].gameobject.transform.position, relay.gameobject.transform.position);
 					if (radiodist * km_per_unit < maxdist) {
-						rgph.AddNeighbour (maxsats + 2 + relay.relayid, satnum, radiodist);
+						rgph.AddNeighbour (maxsats + 2 + relay.relayid, satnum, radiodist, true);
 						if (graph_on) {
 							satlist [satnum].GraphOn (relay.gameobject, null);
 						}
 					} else if (radiodist * km_per_unit < maxdist + margin) {
-						rgph.AddNeighbour (maxsats + 2 + relay.relayid, satnum, Node.INFINITY);
+						rgph.AddNeighbour (maxsats + 2 + relay.relayid, satnum, Node.INFINITY, true);
 					}
 				}
 			}
@@ -1037,11 +1038,23 @@ public class SP_basic_0031: MonoBehaviour {
 		string ds = "";
 		int previd = -4;
 		id = -4;
-
+		double prevdist = km_per_unit * rn.Dist;
+		int hop = 0;
 		while (true) {
 			previd = id;
 			id = rn.Id;
 			ds += "s" + id.ToString () + "," + ((int)(km_per_unit*rn.Dist)).ToString () + " ";
+			if (log_choice == LogChoice.HopDists) {
+				double dist = prevdist - km_per_unit * rn.Dist;
+				prevdist = km_per_unit * rn.Dist;
+				string sl = "";
+				if (rn == rg.startnode) {
+					sl = " LAST";
+				}
+				logfile.WriteLine(elapsed_time.ToString() + sl + " hop " + hop.ToString() + " dist " + dist.ToString());
+				logfile.Flush();
+				hop += 1;
+			}
 			if (previd != -4) {
 				if (previd >= 0 && id >= 0) {
 					/* it's an ISL */

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.IO;
 
 public class SatelliteSP0031 {
 	int maxsats;
@@ -51,12 +52,15 @@ public class SatelliteSP0031 {
 	int graphcount = 0;
 	int maxgraph = -1;
 	Transform earth_transform;
+	System.IO.StreamWriter logfile;
+	LogChoice log_choice;
 
 	public SatelliteSP0031(int satelliteid, int satellitenum, int orbitnumber, Transform earth_transform_, 
 		GameObject orbit_, double orbitalangle, int maxlasercount, int maxsatcount, int phase1_satcount_,
 		double sat_phase_stagger_, int sats_per_orbit_, int orbital_planes_, 
 		float altitude_, int beam_angle_, float beam_radius_, GameObject sat_prefab, GameObject beam_prefab1_, 
-		GameObject beam_prefab2_, GameObject laser_prefab_, GameObject thin_laser_prefab_) {
+		GameObject beam_prefab2_, GameObject laser_prefab_, GameObject thin_laser_prefab_,
+        System.IO.StreamWriter logfile_, LogChoice log_choice_) {
 		orbit = orbit_;
 		satid = satelliteid; /* globally unique satellite ID */
 		satnum = satellitenum; /* satellite's position in its orbit */
@@ -69,6 +73,8 @@ public class SatelliteSP0031 {
 		laser_prefab = laser_prefab_;
         thin_laser_prefab = thin_laser_prefab_;
         earth_transform = earth_transform_;
+		logfile = logfile_;
+		log_choice = log_choice_;
 
 		maxsats = maxsatcount; /* total number of satellites */
 		phase1_satcount = phase1_satcount_; // number of satellites in phase 1 
@@ -335,6 +341,10 @@ public class SatelliteSP0031 {
 			return false;
 		}
 		Debug.Assert (s.IsPreAssigned (this) == false);
+        if (log_choice == LogChoice.LaserDists) {
+			logfile.WriteLine("dist: " + Dist(s));
+			logfile.Flush();
+		}
 		SimplePreAssign (s);
 		s.SimplePreAssign (this);
 		return true;

@@ -478,9 +478,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 1375312109}
   spin: 1
-  speed: 20
+  speed: 10
   use_isls: 1
-  use_relays: 1
+  use_relays: 0
   relay_dist_step: 2
   direction: 1
   directionChangeSpeed: 2
@@ -501,12 +501,12 @@ MonoBehaviour:
   countdown: {fileID: 485043185}
   rightbottom: {fileID: 1204926847}
   maxorbits: 24
-  route_choice: 2
-  constellation: 1
+  route_choice: 0
+  constellation: 0
   no_of_paths: 1
   decimator: 1
   raan0: 0
-  log_choice: 2
+  log_choice: 1
   log_filename: /users/mjh/docs/starlink/dist.txt
   beam_on: 0
   graph_on: 0

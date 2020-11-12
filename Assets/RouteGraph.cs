@@ -81,12 +81,12 @@ public class RouteGraph {
 		startnode.Dist = 0f;
 	}
 
-	public void AddNeighbour(int nodenum1, int nodenum2) {
-		nodes [nodenum1].AddNeighbour (nodes [nodenum2]);
+	public void AddNeighbour(int nodenum1, int nodenum2, bool dist_limited) {
+		nodes [nodenum1].AddNeighbour (nodes [nodenum2], dist_limited);
 	}
 
-	public void AddNeighbour(int nodenum1, int nodenum2, float dist) {
-		nodes [nodenum1].AddNeighbour (nodes [nodenum2], dist);
+	public void AddNeighbour(int nodenum1, int nodenum2, float dist, bool dist_limited) {
+		nodes [nodenum1].AddNeighbour (nodes [nodenum2], dist, dist_limited);
 	}
 		
 
