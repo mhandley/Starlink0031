@@ -1062,8 +1062,8 @@ public class SP_basic_0031: MonoBehaviour {
 					sat = satlist [id];
 					prevsat = satlist [previd];
 					int pathcolour = pathnum;
-					if (pathnum >= laserMaterials.Length) {
-						pathnum = laserMaterials.Length - 1;
+					if (pathcolour >= laserMaterials.Length) {
+						pathcolour = laserMaterials.Length - 1;
 					}
 					sat.ColourLink (prevsat, laserMaterials[pathcolour]);
 					prevsat.ColourLink (sat, laserMaterials[pathcolour]);
