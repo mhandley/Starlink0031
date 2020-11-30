@@ -495,15 +495,19 @@ MonoBehaviour:
   beam_prefab2: {fileID: 1454064570112744, guid: ae0115a2e33c24b7d92d193312575599,
     type: 3}
   isl_material: {fileID: 2100000, guid: 054725efd433545d0867a6c84dd8b574, type: 2}
-  yellowMaterial: {fileID: 2100000, guid: d6795a24fec3f4b478a2532645da09a8, type: 2}
+  laserMaterials:
+  - {fileID: 2100000, guid: d6795a24fec3f4b478a2532645da09a8, type: 2}
+  - {fileID: 2100000, guid: 7931bb27edd134e85b919e88f2970275, type: 2}
+  - {fileID: 2100000, guid: d42fe79d9d8d44828b2d78470b7f1d93, type: 2}
+  - {fileID: 2100000, guid: 4398602df8d6d4e44862bde1f4671791, type: 2}
   cityMaterial: {fileID: 2100000, guid: d6795a24fec3f4b478a2532645da09a8, type: 2}
   txt: {fileID: 2091605839}
   countdown: {fileID: 485043185}
   rightbottom: {fileID: 1204926847}
   maxorbits: 24
-  route_choice: 0
+  route_choice: 3
   constellation: 0
-  no_of_paths: 1
+  no_of_paths: 4
   decimator: 1
   raan0: 0
   log_choice: 1
